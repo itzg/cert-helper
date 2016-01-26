@@ -82,18 +82,20 @@ where SUBJECT_ALT_NAME can be values like
 
   check_init
 
+  cd /certs
+
   if [ -z "$cn" ]; then
     read -p "Subject canonical name: " cn
   fi
   if [ "$is_redo" = true ]; then
-    rm -f ${name}-{key,cert}.pem
+    rm -f {key,cert,bundle}.pem
   fi
 
   cnf_file="extfile.$$.cnf"
-  trap "rm -f $cnf_file" EXIT
+  trap "rm -f $cnf_file csr" EXIT
   touch $cnf_file
 
-  if [ ! cert.pem ]; then
+  if [ ! -f cert.pem -o ! -f key.pem ]; then
     openssl req -subj "/CN=$cn" -new -nodes -keyout key.pem -out csr
 
     echo >> $cnf_file <<END
@@ -127,27 +129,40 @@ ERROR: subjectAltName is missing types. See http://bit.ly/subjectAltName
       -CAserial /ca/ca-serial.dat -CAcreateserial \
       -out cert.pem $ext_arg
 
-    rm csr
     cp /ca/ca.pem ca.pem
-    cat /ca/ca/pem cert.pem > bundle.pem
 
-    chmod -c 0444 cert.pem ca.pem bundle.pem
     chmod -c 0400 key.pem
   fi
 
+  cat /ca/ca.pem cert.pem > bundle.pem
+  chmod -c 0444 cert.pem ca.pem bundle.pem
 
   echo "
 Created key and cert in $(pwd)
 "
+  ls -l /certs
+}
+
+show() {
+  echo "
+Files:"
+  ls /ca /certs
+
+echo ""
+  if [ -f cert.pem ]; then
+    openssl x509 -in cert.pem -text
+  else
+    echo NO CERTIFICATE created yet. Use 'create -h' to see how to do that.
+  fi
 }
 
 case $1 in
-  init|create)
+  init|create|show)
     cmd="$1"
     shift
     $cmd $@
     ;;
   -h|-help|--help|*)
-    echo "Usage: $0 init|create"
+    echo "Usage: $0 init|create|show"
     ;;
 esac
