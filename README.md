@@ -5,7 +5,7 @@ A Docker image that helps with self-signed/cluster signed certificate creation f
 
 Create a volume to be re-used for signing the server, client certs:
 
-   docker volume create --name ca-certs
+    docker volume create --name ca-certs
 
 Initialize the CA certs:
 
@@ -14,4 +14,8 @@ Initialize the CA certs:
 Generate a signed certificate:
 
     docker volume create --name server-certs
-    docker run -it -v ca-certs:/ca:ro -v server-certs:/certs itzg/cert-helper create
+    docker run -it -v ca-certs:/ca -v server-certs:/certs itzg/cert-helper create
+    
+To confirm the content of the created certificate:
+
+    docker run -it -v ca-certs:/ca:ro -v server-certs:/certs:ro cert-helper show
