@@ -11,6 +11,12 @@ To create a volume:
 
     docker volume create --name ca-certs
 
+### Always use interactive TTY
+
+In order to allow `openssl` to successfully prompt for the CA key's password
+be sure to always specify `-it` (or `--interactive=true --tty=true`)
+when using the `init` or `create` commands.
+
 ### Initialize the CA
 
 Use the `init` command to initialize the `/ca` volume:
