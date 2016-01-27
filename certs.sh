@@ -87,6 +87,19 @@ where SUBJECT_ALT_NAME can be values like
   if [ -z "$cn" ]; then
     read -p "Subject canonical name: " cn
   fi
+  if [ -z "$is_client" -a -z "$is_server" ]; then
+    read -n 1 -p "Usage is for (c)lient, (s)erver, or [b]oth: " ans
+    case "$ans" in
+      c|C)
+        is_client=true ;;
+      s|S)
+        is_server=true ;;
+      *)
+        is_client=true
+        is_server=true
+        ;;
+    esac
+  fi
   if [ "$is_redo" = true ]; then
     rm -f {key,cert,bundle}.pem
   fi
@@ -140,7 +153,6 @@ ERROR: subjectAltName is missing types. See http://bit.ly/subjectAltName
   echo "
 Created key and cert in $(pwd)
 "
-  ls -l /certs
 }
 
 show() {
