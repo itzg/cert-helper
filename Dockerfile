@@ -2,10 +2,10 @@ FROM alpine:3.3
 
 MAINTAINER itzg
 
-RUN apk update && \
-  apk add \
-    bash \
-    openssl
+RUN apk add --update  \
+      bash \
+      openssl \
+    && rm -rf /var/cache/apk/*
 
 VOLUME ["/ca","/certs"]
 WORKDIR "/certs"
