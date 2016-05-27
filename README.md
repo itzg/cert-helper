@@ -50,6 +50,18 @@ Notice the volumes can (and should be) attached **read-only** using the `:ro`
 attachment option. This is also how the certificates should be attached to
 your server/application container to avoid accidental corruption.
 
+### Use local directory instead
+
+Rather than generate into Docker volumes, like above, you can also generate them into host directories.
+
+For example,
+
+```
+mkdir -p certs/ca
+docker run -it --rm -u $(id -u) \
+  -v $(pwd)/certs/ca:/ca -v $(pwd)/certs:/certs itzg/cert-helper \
+  init
+```
 
 ## TODO
 
