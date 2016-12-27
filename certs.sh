@@ -99,6 +99,7 @@ where SUBJECT_ALT_NAME can be values like
         is_server=true
         ;;
     esac
+    echo
   fi
   if [ "$is_redo" = true ]; then
     rm -f {key,cert,bundle}.pem
@@ -109,7 +110,9 @@ where SUBJECT_ALT_NAME can be values like
   touch $cnf_file
 
   if [ ! -f cert.pem -o ! -f key.pem ]; then
-    openssl req -subj "/CN=$cn" -new -nodes -keyout key.pem -out csr
+    openssl req -subj "/CN=$cn" -new -nodes -keyout key-base.pem -out csr
+    # Some applications are picky about seeing the RSA PRIVATE KEY header. This ensures that:
+    openssl rsa -in key-base.pem -out key.pem
 
     echo >> $cnf_file <<END
 subjectKeyIdentifier = hash
@@ -144,7 +147,7 @@ ERROR: subjectAltName is missing types. See http://bit.ly/subjectAltName
 
     cp /ca/ca.pem ca.pem
 
-    chmod -c 0400 key.pem
+    chmod -c 0400 key.pem key-base.pem
   fi
 
   cat /ca/ca.pem cert.pem > bundle.pem
