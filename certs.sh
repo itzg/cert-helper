@@ -4,6 +4,11 @@ set -e
 
 KEY_BITS=2048
 CERT_DURATION="-days 1825"
+OS=$(uname -s)
+
+if [[ $OS != Darwin ]]; then
+  CHMOD_ARG="-c"
+fi
 
 init() {
   is_redo=
@@ -18,21 +23,22 @@ init() {
     esac
   done
 
+  mkdir -p $DATADIR/ca
   if [ "$is_redo" = true ]; then
-    rm -f /ca/ca-key.pem /ca/ca.pem
+    rm -f $DATADIR/ca/ca-key.pem $DATADIR/ca/ca.pem
   fi
 
-  openssl req -new -x509 $CERT_DURATION -extensions v3_ca -keyout /ca/ca-key.pem -out /ca/ca.pem
-  chmod -c 400 /ca/ca-key.pem
-  chmod -c 444 /ca/ca.pem
+  openssl req -new -x509 $CERT_DURATION -extensions v3_ca -keyout $DATADIR/ca/ca-key.pem -out $DATADIR/ca/ca.pem
+  chmod $CHMOD_ARG 400 $DATADIR/ca/ca-key.pem
+  chmod $CHMOD_ARG 444 $DATADIR/ca/ca.pem
 
   echo "
-Created CA cert and key in /ca
+Created CA cert and key in $DATADIR/ca
 "
 }
 
 check_init() {
-  if [ ! -f /ca/ca-key.pem -o ! -f /ca/ca.pem ]; then
+  if [ ! -f $DATADIR/ca/ca-key.pem -o ! -f $DATADIR/ca/ca.pem ]; then
     init
   fi
 }
@@ -82,7 +88,9 @@ where SUBJECT_ALT_NAME can be values like
 
   check_init
 
-  cd /certs
+  CADIR=$(cd $DATADIR/ca; pwd)
+  mkdir -p $DATADIR/certs
+  cd $DATADIR/certs
 
   if [ -z "$cn" ]; then
     read -p "Subject canonical name: " cn
@@ -141,17 +149,17 @@ ERROR: subjectAltName is missing types. See http://bit.ly/subjectAltName
     fi
 
     openssl x509 -req $CERT_DURATION -in csr \
-      -CA /ca/ca.pem -CAkey /ca/ca-key.pem \
-      -CAserial /ca/ca-serial.dat -CAcreateserial \
+      -CA $CADIR/ca.pem -CAkey $CADIR/ca-key.pem \
+      -CAserial $CADIR/ca-serial.dat -CAcreateserial \
       -out cert.pem $ext_arg
 
-    cp /ca/ca.pem ca.pem
+    cp $CADIR/ca.pem ca.pem
 
-    chmod -c 0400 key.pem key-base.pem
+    chmod $CHMOD_ARG 0400 key.pem key-base.pem
   fi
 
-  cat /ca/ca.pem cert.pem > bundle.pem
-  chmod -c 0444 cert.pem ca.pem bundle.pem
+  cat $CADIR/ca.pem cert.pem > bundle.pem
+  chmod $CHMOD_ARG 0444 cert.pem ca.pem bundle.pem
 
   echo "
 Created key and cert in $(pwd)
@@ -161,7 +169,7 @@ Created key and cert in $(pwd)
 show() {
   echo "
 Files:"
-  ls /ca /certs
+  ls $DATADIR/ca $DATADIR/certs
 
 echo ""
   if [ -f cert.pem ]; then
